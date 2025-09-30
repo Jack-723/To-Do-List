@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Minimal Todo — DevOps</title>
+  <style>
+    :root{
+      --bg:#0f172a;          /* slate-900 */
+      --panel:#111827;       /* gray-900 */
+      --card:#0b1222;        /* custom dark-blue */
+      --muted:#94a3b8;       /* slate-400 */
+      --text:#e5e7eb;        /* gray-200 */
+      --accent:#22d3ee;      /* cyan-400 */
+      --accent-2:#60a5fa;    /* blue-400 */
+      --danger:#f87171;      /* red-400 */
+      --ok:#34d399;          /* emerald-400 */
+      --border:#1f2937;      /* gray-800 */
+      --shadow: 0 10px 30px rgba(0,0,0,.45);
+      --radius: 14px;
+    }
+    * { box-sizing: border-box }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans";
+      color:var(--text);
+      background:
+        radial-gradient(1200px 600px at 10% -20%, rgba(34,211,238,.18), transparent 60%),
+        radial-gradient(1000px 520px at 120% -20%, rgba(96,165,250,.18), transparent 60%),
+        var(--bg);
+      min-height:100svh;
+    }
+    header{
+      position: sticky; top:0; z-index: 2;
+      backdrop-filter: blur(6px);
+      background: linear-gradient(to right, rgba(15,23,42,.7), rgba(17,24,39,.7));
+      border-bottom:1px solid var(--border);
+    }
+    .nav{
+      max-width:980px; margin:0 auto; padding:16px 20px;
+      display:flex; align-items:center; gap:14px; justify-content:space-between;
+    }
+    .brand{ display:flex; align-items:center; gap:10px; }
+    .logo{
+      width:36px; height:36px; border-radius:10px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      box-shadow: 0 6px 16px rgba(34,211,238,.35), inset 0 0 20px rgba(255,255,255,.13);
+    }
+    h1{ font-size:18px; margin:0; letter-spacing:.3px; }
+    .subtitle{ font-size:12px; color:var(--muted) }
+
+    .container{ max-width:980px; margin:24px auto; padding:0 20px; }
+    .panel{
+      background: linear-gradient(180deg, rgba(17,24,39,.9), rgba(11,18,34,.9));
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding:18px;
+    }
+
+    .top-row{ display:grid; grid-template-columns: 1.2fr .8fr auto; gap:10px; align-items:center; }
+    .input, .select, .btn{
+      padding:10px 12px; border-radius:12px; border:1px solid var(--border);
+      background: var(--card); color: var(--text); font-size:14px;
+    }
+    .input::placeholder{ color: #64748b }
+    .btn{
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color:#0b1222; font-weight:600; border:none; cursor:pointer;
+      transition: transform .05s ease-in-out, filter .2s;
+    }
+    .btn:active{ transform: translateY(1px) }
+    .btn.secondary{
+      background: transparent; color: var(--text); border:1px solid var(--border);
+    }
+
+    .toolbar{
+      display:flex; gap:10px; flex-wrap:wrap; margin:16px 0 8px;
+      align-items:center; justify-content:space-between;
+    }
+    .chips{ display:flex; gap:8px; flex-wrap:wrap }
+    .chip{
+      padding:8px 12px; border-radius:999px; border:1px solid var(--border);
+      background: #0c1426; color:var(--muted); cursor:pointer; font-size:13px;
+    }
+    .chip.active{ color:#0b1222; background: linear-gradient(135deg, var(--accent), var(--accent-2)); border: none; font-weight:700 }
+
+    .counter{ color:var(--muted); font-size:13px }
+
+    ul{ list-style:none; padding:0; margin:0; display:grid; gap:10px }
+    li{
+      display:grid; grid-template-columns: auto 1fr auto auto; gap:12px; align-items:center;
+      background: var(--card); border:1px solid var(--border); border-radius:12px; padding:12px 14px;
+    }
+    .id-badge{
+      font-size:12px; padding:4px 8px; border-radius:999px; background:#0c1426; color:var(--muted); border:1px solid var(--border);
+    }
+    .title{ font-weight:600 }
+    .desc{ color:var(--muted); }
+    .stack{ display:flex; flex-direction:column; gap:4px }
+    .done .title{ text-decoration: line-through; color:#9ca3af }
+    .done .desc{ text-decoration: line-through; color:#6b7280 }
+
+    .btn-row{ display:flex; gap:8px }
+    .small{
+      padding:7px 10px; border-radius:10px; font-size:12px;
+      background: transparent; border:1px solid var(--border); color:var(--text); cursor:pointer;
+    }
+    .small.ok{ border-color: rgba(52, 211, 153, .5) }
+    .small.danger{ border-color: rgba(248, 113, 113, .5); color: #fecaca }
+    .small:hover{ filter: brightness(1.1) }
+
+    footer{ color: var(--muted); font-size:12px; text-align:center; padding:24px 0 }
+    .toast{
+      position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%);
+      background: #0b1222; border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px;
+      color: var(--text); box-shadow: var(--shadow); opacity:0; transition: opacity .3s;
+    }
+    .toast.show{ opacity:1 }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="nav">
+      <div class="brand">
+        <div class="logo"></div>
+        <div>
+          <h1>Minimal Todo</h1>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="panel">
+      <div class="top-row">
+        <input id="title" class="input" placeholder="Task title" />
+        <input id="desc" class="input" placeholder="Description (optional)" />
+        <button id="addBtn" class="btn">Add Task</button>
+      </div>
+
+      <div class="toolbar">
+        <div class="chips">
+          <button class="chip active" data-filter="all">All</button>
+          <button class="chip" data-filter="active">Active</button>
+          <button class="chip" data-filter="done">Done</button>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <input id="search" class="input" style="min-width:240px" placeholder="Search…" />
+          <button id="refreshBtn" class="btn secondary">Refresh</button>
+          <span id="counter" class="counter">0 items</span>
+        </div>
+      </div>
+
+      <ul id="list"></ul>
+    </section>
+  </main>
+
+  <footer>© Your Name — SDLC/DevOps coursework</footer>
+  <div id="toast" class="toast"></div>
+
+  <script>
+    const toast = (msg) => {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(()=>t.classList.remove('show'), 1600);
+    };
+
+    const API = (path, opts={}) => fetch(path, {
+      headers: { "Content-Type":"application/json" },
+      ...opts
+    });
+
+    let ALL = [];           // last loaded list
+    let FILTER = 'all';     // all | active | done
+    let QUERY = '';         // search text
+
+    function render(){
+      const ul = document.getElementById('list');
+      ul.innerHTML = '';
+
+      let items = [...ALL];
+      if (FILTER === 'active') items = items.filter(t => !t.done);
+      if (FILTER === 'done')   items = items.filter(t =>  t.done);
+      if (QUERY) {
+        const q = QUERY.toLowerCase();
+        items = items.filter(t =>
+          (t.title||'').toLowerCase().includes(q) ||
+          (t.description||'').toLowerCase().includes(q)
+        );
+      }
+
+      document.getElementById('counter').textContent = `${items.length} item${items.length===1?'':'s'}`;
+
+      items.forEach(t => {
+        const li = document.createElement('li');
+        if (t.done) li.classList.add('done');
+
+        const id = document.createElement('span');
+        id.className = 'id-badge';
+        id.textContent = `#${t.id}`;
+
+        const stack = document.createElement('div');
+        stack.className = 'stack';
+        const title = document.createElement('div');
+        title.className = 'title';
+        title.textContent = t.title;
+        const desc  = document.createElement('div');
+        desc.className = 'desc';
+        desc.textContent = t.description || '';
+        stack.append(title, desc);
+
+        const btnRow = document.createElement('div');
+        btnRow.className = 'btn-row';
+
+        const toggle = document.createElement('button');
+        toggle.className = 'small ok';
+        toggle.textContent = t.done ? 'Mark not done' : 'Mark done';
+        toggle.onclick = async () => {
+          await API(`/todos/${t.id}`, { method:'PATCH', body: JSON.stringify({ done: !t.done })});
+          load(true); toast('Updated');
+        };
+
+        const del = document.createElement('button');
+        del.className = 'small danger';
+        del.textContent = 'Delete';
+        del.onclick = async () => {
+          await API(`/todos/${t.id}`, { method:'DELETE' });
+          load(true); toast('Deleted');
+        };
+
+        btnRow.append(toggle, del);
+        li.append(id, stack, btnRow);
+        ul.appendChild(li);
+      });
+    }
+
+    async function load(silent=false){
+      const res = await API('/todos');
+      ALL = await res.json();
+      render();
+      if (!silent) toast('Refreshed');
+    }
+
+    async function create(){
+      const title = document.getElementById('title').value.trim();
+      const description = document.getElementById('desc').value.trim();
+      if (!title) { toast('Please enter a title'); return; }
+      await API('/todos', { method:'POST', body: JSON.stringify({ title, description, done:false }) });
+      document.getElementById('title').value = '';
+      document.getElementById('desc').value = '';
+      load(true); toast('Added');
+    }
+
+    // Wire up UI
+    document.getElementById('addBtn').onclick = create;
+    document.getElementById('refreshBtn').onclick = () => load();
+
+    document.querySelectorAll('.chip').forEach(el=>{
+      el.onclick = () => {
+        document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+        el.classList.add('active');
+        FILTER = el.getAttribute('data-filter');
+        render();
+      };
+    });
+
+    document.getElementById('search').addEventListener('input', (e)=>{
+      QUERY = e.target.value;
+      render();
+    });
+
+    // initial load
+    load(true);
+  </script>
+</body>
+</html>
