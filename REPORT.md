@@ -69,10 +69,11 @@ Design and implement a **minimal software application** that can later be used f
 ### 5.1 Component / Data Flow
 ```mermaid
 flowchart TD
-    A[Browser UI (/)] -->|HTTP| B[FastAPI App]
-    A2[Swagger UI (/docs)] -->|HTTP| B
-    B --> C[CRUD Handlers]
-    C --> D[(SQLite: todo.db)]
+    A["Browser UI (/)"] -->|HTTP| B["FastAPI App"]
+    A2["Swagger UI (/docs)"] -->|HTTP| B
+    B --> C["CRUD Handlers"]
+    C --> D["(SQLite: todo.db)"]
+    
 ```
 
 
