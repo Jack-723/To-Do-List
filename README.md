@@ -164,6 +164,7 @@ Every push to the `main` branch triggers an automated CI pipeline that:
 3. ✅ Runs all tests
 4. ✅ Measures code coverage
 5. ✅ **Fails if coverage < 70%**
+6. ✅ **Builds Docker image** (validates containerization)
 
 ### View CI Status
 
