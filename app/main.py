@@ -9,6 +9,10 @@ from .db import create_db_and_tables, get_session
 from .models import TodoCreate, TodoRead, TodoUpdate, Todo
 from . import crud
 
+from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
+from fastapi.responses import Response
+import time
+
 # Create FastAPI app
 app = FastAPI(title="Minimal Todo API", version="1.0.0")
 
@@ -21,10 +25,52 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Prometheus metrics
+REQUEST_COUNT = Counter(
+    'app_requests_total', 
+    'Total request count',
+    ['method', 'endpoint', 'status']
+)
+REQUEST_LATENCY = Histogram(
+    'app_request_latency_seconds',
+    'Request latency in seconds',
+    ['method', 'endpoint']
+)
+
+@app.middleware("http")
+async def metrics_middleware(request, call_next):
+    """Track request metrics."""
+    start_time = time.time()
+    
+    response = await call_next(request)
+    
+    # Calculate latency
+    latency = time.time() - start_time
+    
+    # Record metrics
+    REQUEST_COUNT.labels(
+        method=request.method,
+        endpoint=request.url.path,
+        status=response.status_code
+    ).inc()
+    
+    REQUEST_LATENCY.labels(
+        method=request.method,
+        endpoint=request.url.path
+    ).observe(latency)
+    
+    return response
+
 # Run DB migrations/creation at startup
 @app.on_event("startup")
 def on_startup() -> None:
     create_db_and_tables()
+
+# Metrics endpoint for Prometheus
+@app.get("/metrics", include_in_schema=False)
+def metrics():
+    """Expose Prometheus metrics."""
+    return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
 # ✅ Serve index.html at root
 @app.get("/", include_in_schema=False)

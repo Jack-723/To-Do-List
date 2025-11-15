@@ -1,3 +1,7 @@
 fastapi
 uvicorn[standard]
 sqlmodel
+fastapi
+uvicorn[standard]
+sqlmodel
+prometheus-client
