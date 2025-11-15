@@ -627,6 +627,57 @@ The implemented monitoring provides:
    - Scalable monitoring infrastructure
 
 ---
+### 5.4 Prometheus Configuration
+
+A `prometheus.yml` configuration file was provided to demonstrate integration with Prometheus monitoring.
+
+**Configuration File Structure:**
+```yaml
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'todo-app-local'
+    static_configs:
+      - targets: ['localhost:8000']
+    metrics_path: '/metrics'
+
+  - job_name: 'todo-app-production'
+    static_configs:
+      - targets: ['todo-list-app-976425574918.europe-west1.run.app']
+    scheme: https
+    metrics_path: '/metrics'
+```
+
+**Purpose:**
+This configuration enables Prometheus to:
+- Scrape metrics every 15 seconds
+- Monitor both local and production instances
+- Collect all exposed metrics (/metrics endpoint)
+- Enable alerting and visualization through Grafana
+
+**Usage:**
+Operators can run Prometheus with this configuration to:
+1. Visualize application performance metrics
+2. Set up alerting rules for anomalies
+3. Create dashboards for monitoring
+4. Track long-term trends
+
+This completes the observability stack, making the application fully production-ready with industry-standard monitoring capabilities.
+```
+
+---
+
+## ✅ **Step 3: Verify Your Changes**
+
+Make sure your project now has:
+```
+To-Do-List/
+├── prometheus.yml       ← NEW FILE (you just created this)
+├── README.md            ← UPDATED (with Prometheus section)
+├── REPORT.md            ← UPDATED (with Section 5.4)
+└── ... (other files)
 
 ## 6. DevOps Best Practices Applied
 

@@ -214,6 +214,36 @@ GET /metrics
 
 ---
 
+### Prometheus Configuration
+
+A `prometheus.yml` configuration file is provided to demonstrate how to set up Prometheus to scrape metrics from the application.
+
+**Configuration includes:**
+- Local development instance (`localhost:8000`)
+- Production instance (Google Cloud Run)
+
+**To use with Prometheus:**
+
+1. Install Prometheus: https://prometheus.io/download/
+2. Run Prometheus with the config:
+```bash
+   prometheus --config.file=prometheus.yml
+```
+3. Access Prometheus UI: http://localhost:9090
+4. View metrics and create dashboards
+
+**Example Prometheus Queries:**
+```promql
+# Total requests
+rate(app_requests_total[5m])
+
+# Average latency
+histogram_quantile(0.95, rate(app_request_latency_seconds_bucket[5m]))
+
+# Error rate
+rate(app_requests_total{status=~"5.."}[5m])
+```
+
 ## 📁 Project Structure (Updated)
 ```
 To-Do-List/
