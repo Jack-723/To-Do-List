@@ -4,9 +4,10 @@ services:
   web:
     build: .
     ports:
-      - "8000:8000"
+      - "8000:8080"  # Map local port 8000 to container port 8080
     volumes:
       - ./todo.db:/app/todo.db
     environment:
       - PYTHONUNBUFFERED=1
+      - PORT=8080  # Tell the app to use port 8080
     restart: unless-stopped
