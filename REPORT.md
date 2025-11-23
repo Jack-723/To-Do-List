@@ -650,6 +650,37 @@ scrape_configs:
     metrics_path: '/metrics'
 ```
 
+### 5.5 Production Metrics Screenshots
+
+The following screenshots demonstrate the working monitoring setup in production:
+
+#### Health Check Endpoint
+
+![Health Check](screenshots/Health.png)
+
+The `/health` endpoint returns a successful status, confirming the application is operational.
+
+#### Prometheus Metrics Endpoint
+
+![Metrics Endpoint](screenshots/Metrics.png)
+
+The `/metrics` endpoint exposes Prometheus-compatible metrics including:
+- Request counts by endpoint, method, and status code
+- Request latency histograms
+- Python runtime metrics
+- Process metrics (memory, CPU)
+
+#### Live Application
+
+![Live Application](screenshots/Main_app.png)
+
+The application is fully functional and accessible at the production URL.
+
+**Note:** These screenshots serve as documentation of the working deployment. The professor can verify the live endpoints directly at:
+- Health: https://todo-list-app-976425574918.europe-west1.run.app/health
+- Metrics: https://todo-list-app-976425574918.europe-west1.run.app/metrics
+
+
 **Purpose:**
 This configuration enables Prometheus to:
 - Scrape metrics every 15 seconds
@@ -665,19 +696,10 @@ Operators can run Prometheus with this configuration to:
 4. Track long-term trends
 
 This completes the observability stack, making the application fully production-ready with industry-standard monitoring capabilities.
-```
+
 
 ---
 
-## ✅ **Step 3: Verify Your Changes**
-
-Make sure your project now has:
-```
-To-Do-List/
-├── prometheus.yml       ← NEW FILE (you just created this)
-├── README.md            ← UPDATED (with Prometheus section)
-├── REPORT.md            ← UPDATED (with Section 5.4)
-└── ... (other files)
 
 ## 6. DevOps Best Practices Applied
 
