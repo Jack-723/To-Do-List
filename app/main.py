@@ -80,7 +80,7 @@ def root():
 # Health check endpoint
 @app.get("/health")
 def health() -> dict:
-    return {"status": "ok"}
+    return {"status": "ok", "version": "2.0", "cd": "automated"}
 
 # Create todo
 @app.post("/todos", response_model=TodoRead, status_code=status.HTTP_201_CREATED)
