@@ -385,6 +385,187 @@ The average CI pipeline execution time is **20-30 seconds**, providing rapid fee
 - Use of in-memory database for tests
 - Optimized test execution order
 
+## 2.4 Continuous Deployment (CD)
+
+Building upon the CI pipeline, a fully automated Continuous Deployment (CD) system was implemented to deploy the application to Google Cloud Run automatically whenever changes are pushed to the main branch.
+
+### 2.4.1 Automated Deployment Architecture
+
+The CD pipeline extends the CI workflow with three additional jobs:
+
+**Job 1: Test** (already covered in Section 2.1)
+- Runs all tests
+- Enforces 70% coverage threshold
+- Fails the pipeline if any test fails
+
+**Job 2: Build**
+```yaml
+build:
+  runs-on: ubuntu-latest
+  needs: test
+  
+  steps:
+  - name: Checkout code
+    uses: actions/checkout@v4
+  
+  - name: Set up Docker Buildx
+    uses: docker/setup-buildx-action@v3
+  
+  - name: Build Docker image
+    uses: docker/build-push-action@v5
+    with:
+      context: .
+      push: false
+      tags: todo-list-app:latest
+      cache-from: type=gha
+      cache-to: type=gha,mode=max
+```
+
+This job:
+- Depends on successful test completion (`needs: test`)
+- Validates that the Docker image builds correctly
+- Uses GitHub Actions cache to speed up subsequent builds
+- Does NOT push the image (deployment happens from source)
+
+**Job 3: Deploy** (Automated CD)
+```yaml
+deploy:
+  runs-on: ubuntu-latest
+  needs: build
+  if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+  
+  steps:
+  - name: Checkout code
+    uses: actions/checkout@v4
+  
+  - name: Authenticate to Google Cloud
+    uses: google-github-actions/auth@v2
+    with:
+      credentials_json: ${{ secrets.GCP_SA_KEY }}
+  
+  - name: Set up Cloud SDK
+    uses: google-github-actions/setup-gcloud@v2
+  
+  - name: Deploy to Cloud Run
+    run: |
+      gcloud run deploy todo-list-app \
+        --source . \
+        --platform managed \
+        --region ${{ secrets.GCP_REGION }} \
+        --project ${{ secrets.GCP_PROJECT_ID }} \
+        --allow-unauthenticated \
+        --quiet
+```
+
+### 2.4.2 Key CD Features
+
+**1. Conditional Deployment**
+
+The deploy job includes a critical condition:
+```yaml
+if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+```
+
+This ensures:
+- **ONLY pushes to the `main` branch trigger deployment**
+- Pull requests do NOT deploy (they only run tests and build)
+- Manual workflow runs do NOT deploy
+- Feature branches do NOT deploy
+
+This satisfies the assignment requirement: *"Configure secrets and triggers so only the main branch deploys automatically."*
+
+**2. Secure Authentication**
+
+Deployment uses a dedicated Google Cloud service account with minimal necessary permissions:
+
+**Service Account:** `github-actions-deployer@todo-list-devops.iam.gserviceaccount.com`
+
+**Roles Assigned:**
+- **Cloud Run Admin** - Deploy and manage Cloud Run services
+- **Service Account User** - Act as the runtime service account
+- **Storage Admin** - Access container registry
+- **Artifact Registry Writer** - Push Docker images
+- **Cloud Build Editor** - Build containers from source code
+- **Service Usage Consumer** - Use Google Cloud APIs
+
+**Security Implementation:**
+- Credentials stored as encrypted GitHub Secret (`GCP_SA_KEY`)
+- Never exposed in logs or code
+- Principle of least privilege applied
+- Service account cannot be used outside GitHub Actions context
+
+**3. Secrets Management**
+
+Three GitHub Secrets are configured:
+
+| Secret Name | Purpose | Example Value |
+|------------|---------|---------------|
+| `GCP_SA_KEY` | Service account credentials | JSON key file content |
+| `GCP_PROJECT_ID` | Google Cloud project identifier | `todo-list-devops` |
+| `GCP_REGION` | Deployment region | `europe-west1` |
+
+These secrets are:
+- Encrypted at rest in GitHub
+- Never visible in workflow logs
+- Only accessible to authorized workflows
+- Can be rotated without changing code
+
+### 2.4.3 Deployment Workflow
+
+The complete CI/CD pipeline executes as follows:
+
+```
+1. Developer pushes code to `main` branch
+   ↓
+2. GitHub Actions triggers workflow automatically
+   ↓
+3. Test Job runs (~25 seconds)
+   - Sets up Python environment
+   - Installs dependencies
+   - Runs pytest with coverage
+   - ✅ Passes with 93.81% coverage
+   ↓
+4. Build Job runs (~30 seconds)
+   - Validates Docker image builds correctly
+   - Caches layers for future builds
+   - ✅ Build succeeds
+   ↓
+5. Deploy Job runs (~3 minutes)
+   - Authenticates to Google Cloud
+   - Deploys to Cloud Run from source
+   - Builds container image in cloud
+   - Updates live service with zero downtime
+   - ✅ Deployment complete
+   ↓
+6. Live application updated automatically
+   Total time: ~4-5 minutes from commit to production
+```
+
+### 2.4.4 CD Execution Evidence
+
+**Successful Deployment Logs:**
+
+```
+Run gcloud run deploy todo-list-app
+Deploying container to Cloud Run service [todo-list-app] in project [todo-list-devops] region [europe-west1]
+✓ Deploying... Done.
+  ✓ Creating Revision...
+  ✓ Routing traffic...
+  ✓ Setting IAM Policy...
+Done.
+Service [todo-list-app] revision [todo-list-app-00023-abc] has been deployed and is serving 100 percent of traffic.
+Service URL: https://todo-list-app-976425574918.europe-west1.run.app
+```
+
+**Verification:**
+
+The automated deployment can be verified through:
+1. **GitHub Actions Tab:** Shows complete deployment history
+2. **Cloud Run Console:** Displays all revisions and traffic routing
+3. **Live Application:** Reflects code changes within 5 minutes
+4. **Health Endpoint:** Returns updated version information
+
+---
 ---
 
 ## 3. Containerization
