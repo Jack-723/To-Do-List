@@ -74,11 +74,12 @@ jobs:
       uses: google-github-actions/setup-gcloud@v2
     
     - name: Deploy to Cloud Run
-      run: |
-        gcloud run deploy todo-list-app \
-          --source . \
-          --platform managed \
-          --region ${{ secrets.GCP_REGION }} \
-          --project ${{ secrets.GCP_PROJECT_ID }} \
-          --allow-unauthenticated \
-          --quiet
+  run: |
+    gcloud run deploy todo-list-app \
+      --source . \
+      --platform managed \
+      --region ${{ secrets.GCP_REGION }} \
+      --project ${{ secrets.GCP_PROJECT_ID }} \
+      --allow-unauthenticated \
+      --service-account github-actions-deployer@todo-list-devops.iam.gserviceaccount.com \
+      --quiet
