@@ -81,5 +81,4 @@ jobs:
           --region ${{ secrets.GCP_REGION }} \
           --project ${{ secrets.GCP_PROJECT_ID }} \
           --allow-unauthenticated \
-          --service-account=github-actions-deployer@todo-list-devops.iam.gserviceaccount.com \
           --quiet
